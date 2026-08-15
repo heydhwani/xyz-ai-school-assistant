@@ -5,6 +5,7 @@ from . import models
 
 from .routes.auth import router as auth_router
 from .routes.protected import router as protected_router
+from .routes.ai import router as ai_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -13,19 +14,20 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="XYZ AI",
     description="Human-Like AI School Assistant",
-    version="0.2.0"
+    version="0.3.0"
 )
 
 
 app.include_router(auth_router)
 app.include_router(protected_router)
+app.include_router(ai_router)
 
 
 @app.get("/")
 def root():
 
     return {
-        "message": "XYZ AI backend is running 🚀",
+        "message": "XYZ AI backend is running ..",
         "status": "online"
     }
 
