@@ -859,3 +859,562 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   XYZ AI MOTION SYSTEM
+   ========================= */
+
+@keyframes logoPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(42, 111, 255, 0.2),
+      inset 0 0 15px rgba(45, 109, 255, 0.1);
+  }
+
+  50% {
+    box-shadow:
+      0 0 30px rgba(42, 111, 255, 0.45),
+      inset 0 0 20px rgba(45, 109, 255, 0.2);
+  }
+}
+
+@keyframes characterFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+@keyframes orbitRotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes speechFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes insightGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(88, 67, 255, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(88, 67, 255, 0.12);
+  }
+}
+
+/* Logo */
+
+.brand-logo {
+  animation: logoPulse 3.5s ease-in-out infinite;
+}
+
+/* Hero */
+
+.hero-content {
+  animation: heroReveal 0.8s ease-out both;
+}
+
+.character-area {
+  animation: heroReveal 1s ease-out 0.15s both;
+}
+
+.character {
+  animation: characterFloat 4s ease-in-out infinite;
+}
+
+.orbit {
+  animation: orbitRotate 18s linear infinite;
+}
+
+.speech {
+  animation:
+    heroReveal 0.8s ease-out 0.35s both,
+    speechFloat 4s ease-in-out 1s infinite;
+}
+
+/* Sparkles */
+
+.spark-one {
+  animation: sparkle 2.2s ease-in-out infinite;
+}
+
+.spark-two {
+  animation: sparkle 2.7s ease-in-out 0.5s infinite;
+}
+
+.spark-three {
+  animation: sparkle 2.4s ease-in-out 1s infinite;
+}
+
+/* Role cards */
+
+.role-card {
+  animation: cardReveal 0.6s ease-out both;
+}
+
+.role-card:nth-child(1) {
+  animation-delay: 0.15s;
+}
+
+.role-card:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.role-card:nth-child(3) {
+  animation-delay: 0.35s;
+}
+
+.role-card:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+.role-card:hover {
+  transform: translateY(-6px) scale(1.015);
+}
+
+/* Dashboard */
+
+.stat-card {
+  animation: cardReveal 0.55s ease-out both;
+}
+
+.stat-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stat-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stat-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stat-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.panel {
+  animation: cardReveal 0.6s ease-out both;
+}
+
+.ai-panel {
+  animation:
+    cardReveal 0.6s ease-out both,
+    insightGlow 4s ease-in-out 1s infinite;
+}
+
+/* Buttons */
+
+.role-card,
+.quick-actions button,
+.ai-panel button,
+.language,
+.header-actions button {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.quick-actions button:hover {
+  transform: translateX(4px);
+}
+
+.ai-panel button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 44, 190, 0.25);
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================
+   AI CHAT
+   ========================= */
+
+.chat-screen {
+  min-height: 100vh;
+  display: flex;
+  background: #020817;
+  color: #edf4ff;
+}
+
+.chat-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  height: 78px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1b2b43;
+  background: #050d1b;
+}
+
+.chat-header span {
+  color: #71819a;
+  font-size: 10px;
+}
+
+.chat-header h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.chat-header h2 i {
+  margin-left: 8px;
+  color: #4ade80;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.chat-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-header-actions button {
+  width: 38px;
+  height: 34px;
+  border: 1px solid #263751;
+  border-radius: 9px;
+  background: #0a1526;
+  color: #9badc7;
+  cursor: pointer;
+}
+
+.chat-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+}
+
+.conversation {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+}
+
+.conversation-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8%;
+}
+
+.chat-message {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+  animation: cardReveal 0.35s ease-out;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+.chat-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #334d7c;
+  border-radius: 10px;
+  background: #101e36;
+  color: #75a8ff;
+}
+
+.message-content {
+  max-width: min(600px, 75%);
+}
+
+.message-bubble {
+  padding: 13px 16px;
+  border: 1px solid #213553;
+  border-radius: 15px;
+  background: #0d192b;
+  color: #cbd7e9;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.chat-message.user .message-bubble {
+  border-color: #344bb0;
+  background: linear-gradient(135deg, #293eaa, #38247e);
+  color: white;
+}
+
+.message-content small {
+  display: block;
+  margin: 5px 5px 0;
+  color: #596b84;
+  font-size: 8px;
+}
+
+.chat-message.user .message-content small {
+  text-align: right;
+}
+
+.chat-suggestions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 12px 8%;
+}
+
+.chat-suggestions button {
+  padding: 8px 11px;
+  border: 1px solid #263958;
+  border-radius: 20px;
+  background: #0b1729;
+  color: #91a1ba;
+  cursor: pointer;
+  font-size: 9px;
+  transition: 0.2s;
+}
+
+.chat-suggestions button:hover {
+  border-color: #5a65db;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.chat-input {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid #263754;
+  border-radius: 14px;
+  background: #091423;
+}
+
+.chat-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: white;
+  font-size: 12px;
+}
+
+.chat-input input::placeholder {
+  color: #596981;
+}
+
+.voice-button,
+.send-message {
+  width: 38px;
+  height: 35px;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.voice-button {
+  background: transparent;
+  color: #8fa4c3;
+}
+
+.send-message {
+  background: #4b35c9;
+  color: white;
+  box-shadow: 0 0 15px rgba(75, 53, 201, 0.25);
+}
+
+.chat-context {
+  padding: 22px 17px;
+  border-left: 1px solid #1b2b43;
+  background: #050c19;
+}
+
+.context-card {
+  margin-bottom: 14px;
+  padding: 15px;
+  border: 1px solid #1c2d47;
+  border-radius: 12px;
+  background: #0a1525;
+}
+
+.context-card > span {
+  display: block;
+  margin-bottom: 12px;
+  color: #e0e8f6;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.context-card button {
+  width: 100%;
+  margin-top: 7px;
+  padding: 10px;
+  border: 1px solid #253754;
+  border-radius: 8px;
+  background: #101d31;
+  color: #91a1ba;
+  text-align: left;
+  cursor: pointer;
+  font-size: 9px;
+  transition: 0.2s;
+}
+
+.context-card button:hover {
+  border-color: #5269c9;
+  color: white;
+}
+
+.overview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.overview-row label {
+  color: #75859d;
+  font-size: 9px;
+}
+
+.overview-row strong {
+  color: #61d99a;
+  font-size: 10px;
+}
+
+.mini-progress {
+  height: 5px;
+  margin-top: 7px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #17243a;
+}
+
+.mini-progress div {
+  width: 91.2%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2879df, #46c9d8);
+}
+
+.context-ai {
+  padding: 17px;
+  border: 1px solid #332a78;
+  border-radius: 12px;
+  background: linear-gradient(
+    145deg,
+    rgba(42, 31, 108, 0.35),
+    rgba(12, 18, 42, 0.8)
+  );
+}
+
+.context-ai > div {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  border-radius: 9px;
+  background: #302174;
+  color: #a594ff;
+}
+
+.context-ai strong {
+  font-size: 11px;
+}
+
+.context-ai p {
+  margin: 8px 0 0;
+  color: #7889a3;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+@media (max-width: 850px) {
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-context {
+    display: none;
+  }
+
+  .conversation-messages {
+    padding: 10px 2%;
+  }
+
+  .chat-suggestions {
+    padding: 12px 2%;
+  }
+}
