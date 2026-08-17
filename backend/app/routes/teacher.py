@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from datetime import date
 
 from ..database import get_db
 from ..models import (
@@ -19,6 +21,12 @@ router = APIRouter(
     tags=["Teacher Dashboard"]
 )
 
+class AssignmentCreateRequest(BaseModel):
+
+    title: str
+    description: str | None = None
+    due_date: date
+    class_id: int
 
 @router.get("/dashboard")
 def teacher_dashboard(
@@ -284,4 +292,80 @@ def teacher_dashboard(
         "assignments": assignments,
 
         "timetable": timetable,
+    }
+
+
+@router.post("/assignments")
+def create_assignment(
+    data: AssignmentCreateRequest,
+    current_user=Depends(
+        require_roles("teacher")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    classroom = (
+        db.query(ClassRoom)
+        .filter(
+            ClassRoom.id == data.class_id
+        )
+        .first()
+    )
+
+    if not classroom:
+        raise HTTPException(
+            status_code=404,
+            detail="Class not found"
+        )
+
+    if classroom.teacher_id != current_user["id"]:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not assigned to this class"
+        )
+
+    assignment = Assignment(
+        teacher_id=current_user["id"],
+        class_id=data.class_id,
+        title=data.title,
+        description=data.description,
+        due_date=data.due_date
+    )
+
+    db.add(assignment)
+    db.commit()
+    db.refresh(assignment)
+
+    enrollments = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.class_id == data.class_id
+        )
+        .all()
+    )
+
+    for enrollment in enrollments:
+
+        submission = AssignmentSubmission(
+            assignment_id=assignment.id,
+            student_id=enrollment.student_id,
+            submitted=False,
+            score=None
+        )
+
+        db.add(submission)
+
+    db.commit()
+
+    return {
+        "message": "Assignment created successfully",
+        "assignment": {
+            "id": assignment.id,
+            "title": assignment.title,
+            "description": assignment.description,
+            "due_date": assignment.due_date,
+            "class_id": assignment.class_id,
+            "teacher_id": assignment.teacher_id,
+            "total_students": len(enrollments)
+        }
     }
