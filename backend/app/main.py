@@ -1,11 +1,12 @@
 from fastapi import FastAPI
-
+from .routes.student import router as student_router
 from .database import Base, engine
 from . import models
 
 from .routes.auth import router as auth_router
 from .routes.protected import router as protected_router
 from .routes.ai import router as ai_router
+
 
 
 Base.metadata.create_all(bind=engine)
@@ -21,6 +22,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(protected_router)
 app.include_router(ai_router)
+app.include_router(student_router)
 
 
 @app.get("/")
