@@ -21,6 +21,7 @@ def get_current_user(
 
         user_id = payload.get("sub")
         role = payload.get("role")
+        name = payload.get("name")
 
         if not user_id or not role:
 
@@ -31,7 +32,8 @@ def get_current_user(
 
         return {
             "id": int(user_id),
-            "role": role
+            "role": role,
+            "name": name
         }
 
     except Exception:

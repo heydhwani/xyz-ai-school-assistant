@@ -121,7 +121,8 @@ def login(
 
     token = create_access_token(
         user_id=user.id,
-        role=user.role
+        role=user.role,
+        name=user.name
     )
 
     return {
