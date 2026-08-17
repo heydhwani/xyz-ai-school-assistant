@@ -28,6 +28,12 @@ class AssignmentCreateRequest(BaseModel):
     due_date: date
     class_id: int
 
+class AttendanceRequest(BaseModel):
+
+    student_id: int
+    date: date
+    status: str
+
 @router.get("/dashboard")
 def teacher_dashboard(
     current_user=Depends(
@@ -367,5 +373,122 @@ def create_assignment(
             "class_id": assignment.class_id,
             "teacher_id": assignment.teacher_id,
             "total_students": len(enrollments)
+        }
+    }
+
+@router.post("/attendance")
+def mark_attendance(
+    data: AttendanceRequest,
+    current_user=Depends(
+        require_roles("teacher")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    teacher_id = current_user["id"]
+
+    # 1. Find teacher's class
+
+    classroom = (
+        db.query(ClassRoom)
+        .filter(
+            ClassRoom.teacher_id == teacher_id
+        )
+        .first()
+    )
+
+    if not classroom:
+        raise HTTPException(
+            status_code=404,
+            detail="No class assigned to this teacher"
+        )
+
+    # 2. Validate status
+
+    if data.status.lower() not in {
+        "present",
+        "absent"
+    }:
+        raise HTTPException(
+            status_code=400,
+            detail="Status must be present or absent"
+        )
+
+    # 3. Check student belongs to teacher's class
+
+    enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == data.student_id,
+            Enrollment.class_id == classroom.id
+        )
+        .first()
+    )
+
+    if not enrollment:
+        raise HTTPException(
+            status_code=403,
+            detail="Student does not belong to your class"
+        )
+
+    # 4. Check student exists
+
+    student = (
+        db.query(User)
+        .filter(
+            User.id == data.student_id,
+            User.role == "student"
+        )
+        .first()
+    )
+
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    # 5. Check duplicate attendance
+
+    existing_attendance = (
+        db.query(Attendance)
+        .filter(
+            Attendance.student_id == data.student_id,
+            Attendance.class_id == classroom.id,
+            Attendance.date == data.date
+        )
+        .first()
+    )
+
+    if existing_attendance:
+        raise HTTPException(
+            status_code=400,
+            detail="Attendance already marked for this date"
+        )
+
+    # 6. Create attendance
+
+    attendance = Attendance(
+        student_id=data.student_id,
+        class_id=classroom.id,
+        date=data.date,
+        status=data.status.lower()
+    )
+
+    db.add(attendance)
+    db.commit()
+    db.refresh(attendance)
+
+    # 7. Response
+
+    return {
+        "message": "Attendance marked successfully",
+        "attendance": {
+            "id": attendance.id,
+            "student_id": student.id,
+            "student_name": student.name,
+            "class_id": classroom.id,
+            "date": attendance.date,
+            "status": attendance.status
         }
     }
