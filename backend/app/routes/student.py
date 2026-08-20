@@ -23,8 +23,8 @@ router = APIRouter(
     tags=["Student Dashboard"]
 )
 
-class AssignmentSubmitRequest(BaseModel):
 
+class AssignmentSubmitRequest(BaseModel):
     assignment_id: int
 
 
@@ -38,13 +38,11 @@ def student_dashboard(
 
     student_id = current_user["id"]
 
-    
-    # Get student
-    
-
     student = (
         db.query(User)
-        .filter(User.id == student_id)
+        .filter(
+            User.id == student_id
+        )
         .first()
     )
 
@@ -53,10 +51,6 @@ def student_dashboard(
             status_code=404,
             detail="Student not found"
         )
-
-    
-    # Get student's enrollment
-    
 
     enrollment = (
         db.query(Enrollment)
@@ -87,10 +81,6 @@ def student_dashboard(
                 "grade": classroom.grade,
             }
 
-   
-    # Attendance
-    
-
     attendance_records = (
         db.query(Attendance)
         .filter(
@@ -116,9 +106,6 @@ def student_dashboard(
         else 0
     )
 
-   
-    # Assignments
-    
     assignments = []
 
     if enrollment:
@@ -126,8 +113,7 @@ def student_dashboard(
         assignment_records = (
             db.query(Assignment)
             .filter(
-                Assignment.class_id
-                == enrollment.class_id
+                Assignment.class_id == enrollment.class_id
             )
             .all()
         )
@@ -135,14 +121,10 @@ def student_dashboard(
         for assignment in assignment_records:
 
             submission = (
-                db.query(
-                    AssignmentSubmission
-                )
+                db.query(AssignmentSubmission)
                 .filter(
-                    AssignmentSubmission.assignment_id
-                    == assignment.id,
-                    AssignmentSubmission.student_id
-                    == student_id
+                    AssignmentSubmission.assignment_id == assignment.id,
+                    AssignmentSubmission.student_id == student_id
                 )
                 .first()
             )
@@ -164,10 +146,6 @@ def student_dashboard(
                 ),
             })
 
-   
-    # Timetable
-    
-
     timetable = []
 
     if enrollment:
@@ -175,8 +153,7 @@ def student_dashboard(
         timetable_records = (
             db.query(Timetable)
             .filter(
-                Timetable.class_id
-                == enrollment.class_id
+                Timetable.class_id == enrollment.class_id
             )
             .all()
         )
@@ -190,10 +167,6 @@ def student_dashboard(
                 "end_time": item.end_time,
             })
 
-    
-    # Final dashboard response
-   
-
     return {
         "student": {
             "id": student.id,
@@ -201,19 +174,16 @@ def student_dashboard(
             "email": student.email,
             "role": student.role,
         },
-
         "class": classroom_data,
-
         "attendance": {
             "total_days": total_days,
             "present_days": present_days,
             "percentage": attendance_percentage,
         },
-
         "assignments": assignments,
-
         "timetable": timetable,
     }
+
 
 @router.post("/assignments/submit")
 def submit_assignment(
@@ -225,8 +195,6 @@ def submit_assignment(
 ):
 
     student_id = current_user["id"]
-
-    # 1. Find assignment
 
     assignment = (
         db.query(Assignment)
@@ -241,8 +209,6 @@ def submit_assignment(
             status_code=404,
             detail="Assignment not found"
         )
-
-    # 2. Check student belongs to assignment's class
 
     enrollment = (
         db.query(Enrollment)
@@ -259,8 +225,6 @@ def submit_assignment(
             detail="You are not enrolled in this class"
         )
 
-    # 3. Find submission record
-
     submission = (
         db.query(AssignmentSubmission)
         .filter(
@@ -276,15 +240,11 @@ def submit_assignment(
             detail="Submission record not found"
         )
 
-    # 4. Prevent duplicate submission
-
     if submission.submitted:
         raise HTTPException(
             status_code=400,
             detail="Assignment already submitted"
         )
-
-    # 5. Mark as submitted
 
     submission.submitted = True
 
@@ -301,6 +261,7 @@ def submit_assignment(
             "score": submission.score
         }
     }
+
 
 @router.get("/ai-insight")
 def student_ai_insight(
@@ -422,15 +383,51 @@ def student_ai_insight(
         else None
     )
 
-        # 5. Academic risk analysis
-
     risk_factors = []
+    urgent_assignments = []
+
+    today = date.today()
+
+    for assignment in pending_assignments:
+
+        due_date = date.fromisoformat(
+            assignment["due_date"]
+        )
+
+        days_remaining = (
+            due_date - today
+        ).days
+
+        assignment["days_remaining"] = days_remaining
+
+        if days_remaining < 0:
+
+            risk_factors.append(
+                f"Assignment '{assignment['title']}' is overdue"
+            )
+
+            urgent_assignments.append(
+                assignment["title"]
+            )
+
+        elif days_remaining <= 2:
+
+            risk_factors.append(
+                f"Assignment '{assignment['title']}' is due within {days_remaining} days"
+            )
+
+            urgent_assignments.append(
+                assignment["title"]
+            )
 
     if attendance_percentage < 75:
+
         risk_factors.append(
             "Attendance is below 75%"
         )
+
     elif attendance_percentage < 85:
+
         risk_factors.append(
             "Attendance needs improvement"
         )
@@ -438,24 +435,40 @@ def student_ai_insight(
     if average_score is not None:
 
         if average_score < 5:
+
             risk_factors.append(
                 "Assignment performance is low"
             )
+
         elif average_score < 7:
+
             risk_factors.append(
                 "Assignment performance can be improved"
             )
 
     if len(pending_assignments) >= 3:
+
         risk_factors.append(
             "Multiple assignments are pending"
         )
-    elif len(pending_assignments) > 0:
+
+    elif (
+        len(pending_assignments) > 0
+        and not urgent_assignments
+    ):
+
         risk_factors.append(
             "An assignment is still pending"
         )
 
-    # Determine overall risk
+    overdue_assignment = any(
+        (
+            date.fromisoformat(
+                assignment["due_date"]
+            ) - today
+        ).days < 0
+        for assignment in pending_assignments
+    )
 
     if (
         attendance_percentage < 75
@@ -464,6 +477,7 @@ def student_ai_insight(
             and average_score < 5
         )
         or len(pending_assignments) >= 3
+        or overdue_assignment
     ):
 
         risk_level = "HIGH"
@@ -484,6 +498,7 @@ def student_ai_insight(
         risk_level = "LOW"
 
     if not risk_factors:
+
         risk_factors.append(
             "No major academic risk detected"
         )
@@ -507,7 +522,7 @@ def student_ai_insight(
             "end_time": item.end_time
         })
 
-        insight = generate_student_insight(
+    insight = generate_student_insight(
         student_name=student.name,
         attendance_percentage=attendance_percentage,
         pending_assignments=pending_assignments,
@@ -515,15 +530,15 @@ def student_ai_insight(
         average_score=average_score,
         timetable=timetable,
         risk_level=risk_level,
-        risk_factors=risk_factors
+        risk_factors=risk_factors,
+        urgent_assignments=urgent_assignments
     )
 
-        return {
+    return {
         "student": {
             "id": student.id,
             "name": student.name
         },
-
         "performance": {
             "attendance_percentage": attendance_percentage,
             "average_score": average_score,
@@ -534,11 +549,10 @@ def student_ai_insight(
                 completed_assignments
             )
         },
-
         "risk_analysis": {
             "level": risk_level,
-            "factors": risk_factors
+            "factors": risk_factors,
+            "urgent_assignments": urgent_assignments
         },
-
         "ai_insight": insight
     }

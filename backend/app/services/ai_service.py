@@ -90,7 +90,8 @@ def generate_student_insight(
     average_score: float | None,
     timetable: list,
     risk_level: str,
-    risk_factors: list
+    risk_factors: list,
+    urgent_assignments: list
 ) -> str:
 
     prompt = f"""
@@ -102,20 +103,29 @@ Student:
 {student_name}
 
 Verified performance:
+
 - Attendance: {attendance_percentage}%
+
 - Average assignment score: {
     average_score
     if average_score is not None
     else "No graded assignments"
 }
-- Pending assignments: {pending_assignments}
-- Completed assignments: {completed_assignments}
+
+- Pending assignments:
+{pending_assignments}
+
+- Completed assignments:
+{completed_assignments}
 
 System-detected risk level:
 {risk_level}
 
 System-detected risk factors:
 {risk_factors}
+
+Urgent assignments:
+{urgent_assignments}
 
 Timetable:
 {timetable}
@@ -130,6 +140,8 @@ IMPORTANT RULES:
 6. Give practical and achievable recommendations.
 7. Be supportive and never label or shame the student.
 8. Keep the response concise.
+9. Pay special attention to assignments that are overdue or due very soon.
+10. Do not exaggerate urgency beyond the verified deadline information.
 
 Return exactly this structure:
 
