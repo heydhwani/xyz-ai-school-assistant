@@ -34,6 +34,12 @@ class AttendanceRequest(BaseModel):
     date: date
     status: str
 
+class AssignmentGradeRequest(BaseModel):
+
+    assignment_id: int
+    student_id: int
+    score: int
+
 @router.get("/dashboard")
 def teacher_dashboard(
     current_user=Depends(
@@ -490,5 +496,115 @@ def mark_attendance(
             "class_id": classroom.id,
             "date": attendance.date,
             "status": attendance.status
+        }
+    }
+
+@router.put("/assignments/grade")
+def grade_assignment(
+    data: AssignmentGradeRequest,
+    current_user=Depends(
+        require_roles("teacher")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    teacher_id = current_user["id"]
+
+    # 1. Find assignment created by this teacher
+
+    assignment = (
+        db.query(Assignment)
+        .filter(
+            Assignment.id == data.assignment_id,
+            Assignment.teacher_id == teacher_id
+        )
+        .first()
+    )
+
+    if not assignment:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment not found"
+        )
+
+    # 2. Check student belongs to assignment's class
+
+    enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == data.student_id,
+            Enrollment.class_id == assignment.class_id
+        )
+        .first()
+    )
+
+    if not enrollment:
+        raise HTTPException(
+            status_code=403,
+            detail="Student does not belong to this class"
+        )
+
+    # 3. Validate score
+
+    if data.score < 0 or data.score > 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Score must be between 0 and 10"
+        )
+
+    # 4. Find student's submission
+
+    submission = (
+        db.query(AssignmentSubmission)
+        .filter(
+            AssignmentSubmission.assignment_id
+            == data.assignment_id,
+            AssignmentSubmission.student_id
+            == data.student_id
+        )
+        .first()
+    )
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment submission not found"
+        )
+
+    # 5. Student must submit before grading
+
+    if not submission.submitted:
+        raise HTTPException(
+            status_code=400,
+            detail="Student has not submitted this assignment"
+        )
+
+    # 6. Update score
+
+    submission.score = data.score
+
+    db.commit()
+    db.refresh(submission)
+
+    # 7. Get student details
+
+    student = (
+        db.query(User)
+        .filter(
+            User.id == data.student_id,
+            User.role == "student"
+        )
+        .first()
+    )
+
+    return {
+        "message": "Assignment graded successfully",
+        "submission": {
+            "assignment_id": assignment.id,
+            "assignment_title": assignment.title,
+            "student_id": student.id,
+            "student_name": student.name,
+            "submitted": submission.submitted,
+            "score": submission.score
         }
     }

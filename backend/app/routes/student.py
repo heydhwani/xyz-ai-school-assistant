@@ -2,6 +2,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from ..database import get_db
 from ..models import (
@@ -21,6 +22,10 @@ router = APIRouter(
     tags=["Student Dashboard"]
 )
 
+class AssignmentSubmitRequest(BaseModel):
+
+    assignment_id: int
+
 
 @router.get("/dashboard")
 def student_dashboard(
@@ -32,9 +37,9 @@ def student_dashboard(
 
     student_id = current_user["id"]
 
-    # --------------------------------------------------------
+    
     # Get student
-    # --------------------------------------------------------
+    
 
     student = (
         db.query(User)
@@ -48,9 +53,9 @@ def student_dashboard(
             detail="Student not found"
         )
 
-    # --------------------------------------------------------
+    
     # Get student's enrollment
-    # --------------------------------------------------------
+    
 
     enrollment = (
         db.query(Enrollment)
@@ -81,9 +86,9 @@ def student_dashboard(
                 "grade": classroom.grade,
             }
 
-    # --------------------------------------------------------
+   
     # Attendance
-    # --------------------------------------------------------
+    
 
     attendance_records = (
         db.query(Attendance)
@@ -110,10 +115,9 @@ def student_dashboard(
         else 0
     )
 
-    # --------------------------------------------------------
+   
     # Assignments
-    # --------------------------------------------------------
-
+    
     assignments = []
 
     if enrollment:
@@ -159,9 +163,9 @@ def student_dashboard(
                 ),
             })
 
-    # --------------------------------------------------------
+   
     # Timetable
-    # --------------------------------------------------------
+    
 
     timetable = []
 
@@ -185,9 +189,9 @@ def student_dashboard(
                 "end_time": item.end_time,
             })
 
-    # --------------------------------------------------------
+    
     # Final dashboard response
-    # --------------------------------------------------------
+   
 
     return {
         "student": {
@@ -208,4 +212,91 @@ def student_dashboard(
         "assignments": assignments,
 
         "timetable": timetable,
+    }
+
+@router.post("/assignments/submit")
+def submit_assignment(
+    data: AssignmentSubmitRequest,
+    current_user=Depends(
+        require_roles("student")
+    ),
+    db: Session = Depends(get_db)
+):
+
+    student_id = current_user["id"]
+
+    # 1. Find assignment
+
+    assignment = (
+        db.query(Assignment)
+        .filter(
+            Assignment.id == data.assignment_id
+        )
+        .first()
+    )
+
+    if not assignment:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment not found"
+        )
+
+    # 2. Check student belongs to assignment's class
+
+    enrollment = (
+        db.query(Enrollment)
+        .filter(
+            Enrollment.student_id == student_id,
+            Enrollment.class_id == assignment.class_id
+        )
+        .first()
+    )
+
+    if not enrollment:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not enrolled in this class"
+        )
+
+    # 3. Find submission record
+
+    submission = (
+        db.query(AssignmentSubmission)
+        .filter(
+            AssignmentSubmission.assignment_id == assignment.id,
+            AssignmentSubmission.student_id == student_id
+        )
+        .first()
+    )
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission record not found"
+        )
+
+    # 4. Prevent duplicate submission
+
+    if submission.submitted:
+        raise HTTPException(
+            status_code=400,
+            detail="Assignment already submitted"
+        )
+
+    # 5. Mark as submitted
+
+    submission.submitted = True
+
+    db.commit()
+    db.refresh(submission)
+
+    return {
+        "message": "Assignment submitted successfully",
+        "submission": {
+            "assignment_id": assignment.id,
+            "assignment_title": assignment.title,
+            "student_id": student_id,
+            "submitted": submission.submitted,
+            "score": submission.score
+        }
     }
