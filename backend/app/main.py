@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from .routes.student import router as student_router
 from .routes.parent import router as parent_router
 from .routes.teacher import router as teacher_router
@@ -19,6 +20,17 @@ app = FastAPI(
     title="XYZ AI",
     description="Human-Like AI School Assistant",
     version="0.3.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
